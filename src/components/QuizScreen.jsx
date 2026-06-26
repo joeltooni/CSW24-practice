@@ -125,7 +125,7 @@ export default function QuizScreen({
       content = (
         <>
           <ModeTag type={quiz.type} />
-          <AnimatedWord text={quiz.word} />
+          <AnimatedWord text={quiz.word.word} />
           <div className="word-points">
             <Coins size={16} /> {quiz.points} points
           </div>

@@ -89,7 +89,6 @@ const generateGuessMeaning = (word, allWords) => {
   const options = shuffle([word.definition, ...wrongWords.map((w) => w.definition)])
   return {
     type: 'guessMeaning',
-    word: word.word,
     points: word.points,
     options,
     answer: word.definition,
@@ -112,22 +111,31 @@ const generators = [
   generateMeaningToWord,
 ]
 
-// Build a prioritized quiz set: needs-practice first, then rare, then common.
+// Quiz only words you've engaged with in Study (seen / mastered / needs-practice).
+// Returns [] when nothing in the category has been studied yet — the UI then
+// prompts the user to study first. Order: needs-practice → seen → mastered, with
+// rare favoured within each tier and ties shuffled. Distractor options may still
+// be drawn from any word in the category for variety.
 export const generateQuiz = (wordData, questionCount, length, progress) => {
   if (!wordData) return []
 
   const filteredWords = wordData.words.filter((w) => matchesLength(w, length))
+  const pool = filteredWords.filter((w) => progress[w.word])
+  if (pool.length === 0) return []
 
-  const rareWords = filteredWords.filter((w) => w.rarity === 'rare')
-  const commonWords = filteredWords.filter((w) => w.rarity === 'common')
-  const needsPractice = filteredWords.filter((w) => progress[w.word] === 'needs-practice')
+  const statusRank = (w) => {
+    const s = progress[w.word]
+    if (s === 'needs-practice') return 0
+    if (s === 'seen') return 1
+    return 2 // mastered
+  }
+  const rarityRank = (w) => (w.rarity === 'rare' ? 0 : 1)
 
-  let candidates = [...needsPractice, ...rareWords, ...commonWords]
-  candidates = candidates.filter(
-    (w, i, arr) => arr.findIndex((x) => x.word === w.word) === i,
-  )
-
-  const selected = candidates.slice(0, questionCount)
+  const selected = pool
+    .map((w) => ({ w, s: statusRank(w), r: rarityRank(w), j: Math.random() }))
+    .sort((a, b) => a.s - b.s || a.r - b.r || a.j - b.j)
+    .slice(0, questionCount)
+    .map((x) => x.w)
 
   return selected.map((word) => {
     const make = generators[Math.floor(Math.random() * generators.length)]

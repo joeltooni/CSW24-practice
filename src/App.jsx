@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { LoaderCircle, SpellCheck2, AlertTriangle } from 'lucide-react'
+import { LoaderCircle, SpellCheck2, AlertTriangle, BookOpen } from 'lucide-react'
 import { getProgress, saveProgress, clearProgress } from './lib/db.js'
 import { generateQuiz, matchesLength, extractWords } from './lib/quiz.js'
 
@@ -116,9 +116,29 @@ export default function App() {
   const masteredCount = Object.values(progress).filter((p) => p === 'mastered').length
   const needsPracticeCount = Object.values(progress).filter((p) => p === 'needs-practice').length
 
+  // Resume position is saved per category so Study continues where you stopped.
+  const studyPosKey = (cat) => `study-pos:${cat}`
+
   const startStudy = () => {
-    setStudyIndex(0)
+    const max = Math.max(0, getStudyWords().length - 1)
+    const saved = parseInt(localStorage.getItem(studyPosKey(selectedWordLength)) || '0', 10)
+    setStudyIndex(Math.min(Math.max(0, saved || 0), max))
     setScreen('study')
+  }
+
+  // Persist the study position whenever it changes during a study session.
+  useEffect(() => {
+    if (screen !== 'study') return
+    localStorage.setItem(studyPosKey(selectedWordLength), String(studyIndex))
+  }, [studyIndex, screen, selectedWordLength])
+
+  // Mark a word "seen" the first time it's viewed (never downgrade a real status).
+  const markSeen = (word) => {
+    setProgress((prev) => {
+      if (prev[word]) return prev
+      saveProgress(word, 'seen')
+      return { ...prev, [word]: 'seen' }
+    })
   }
 
   const startQuiz = () => {
@@ -259,26 +279,45 @@ export default function App() {
             studyIndex={studyIndex}
             setStudyIndex={setStudyIndex}
             progress={progress}
+            onSeen={markSeen}
             onMarkLearned={markStudyWordLearned}
             onExit={() => setScreen('setup')}
           />
         )}
 
-        {screen === 'quiz' && quizzes.length > 0 && (
-          <QuizScreen
-            quiz={quizzes[currentQuizIndex]}
-            quizIndex={currentQuizIndex}
-            quizCount={quizzes.length}
-            quizStats={quizStats}
-            feedback={feedback}
-            picked={picked}
-            userInput={userInput}
-            setUserInput={setUserInput}
-            onAnswer={handleQuizAnswer}
-            onSubmitWord={handleCompleteWordSubmit}
-            onExit={() => setScreen('setup')}
-          />
-        )}
+        {screen === 'quiz' &&
+          (quizzes.length > 0 ? (
+            <QuizScreen
+              quiz={quizzes[currentQuizIndex]}
+              quizIndex={currentQuizIndex}
+              quizCount={quizzes.length}
+              quizStats={quizStats}
+              feedback={feedback}
+              picked={picked}
+              userInput={userInput}
+              setUserInput={setUserInput}
+              onAnswer={handleQuizAnswer}
+              onSubmitWord={handleCompleteWordSubmit}
+              onExit={() => setScreen('setup')}
+            />
+          ) : (
+            <div className="container">
+              <div className="card">
+                <BookOpen size={36} color="var(--accent)" style={{ marginBottom: 10 }} />
+                <h2>Study these words first</h2>
+                <p style={{ marginTop: 8, color: 'var(--ink-soft)' }}>
+                  You haven't studied any words in this category yet. Study them, then come back to
+                  quiz yourself on what you've seen.
+                </p>
+                <div className="navigation">
+                  <button className="primary" onClick={startStudy}>
+                    <BookOpen size={18} /> Study Mode
+                  </button>
+                  <button onClick={() => setScreen('setup')}>Back to Menu</button>
+                </div>
+              </div>
+            </div>
+          ))}
 
         {screen === 'results' && (
           <ResultsScreen

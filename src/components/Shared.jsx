@@ -60,15 +60,16 @@ function Tile({ ch, small }) {
 
 // Word rendered as Scrabble tiles, each springing in with a stagger.
 export function AnimatedWord({ text, small = false }) {
+  const str = String(text ?? '')
   return (
     <motion.div
       className="word-display"
       initial="hidden"
       animate="visible"
       variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
-      key={text}
+      key={str}
     >
-      {text.split('').map((ch, i) => (
+      {str.split('').map((ch, i) => (
         <Tile key={`${ch}-${i}`} ch={ch} small={small} />
       ))}
     </motion.div>

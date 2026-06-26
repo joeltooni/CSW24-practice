@@ -7,7 +7,7 @@ import {
   Coins,
   CheckCircle2,
   AlertTriangle,
-  Sparkle,
+  Eye,
   Check,
 } from 'lucide-react'
 import { AnimatedWord } from './Shared.jsx'
@@ -17,6 +17,7 @@ export default function StudyScreen({
   studyIndex,
   setStudyIndex,
   progress,
+  onSeen,
   onMarkLearned,
   onExit,
 }) {
@@ -34,6 +35,11 @@ export default function StudyScreen({
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [studyIndex, studyWords.length])
+
+  // Record each word as "seen" the moment it's shown.
+  useEffect(() => {
+    if (word) onSeen(word.word)
+  }, [word?.word]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!word) {
     return (
@@ -109,9 +115,9 @@ export default function StudyScreen({
                 <AlertTriangle size={13} /> Needs Practice
               </span>
             )}
-            {!status && (
+            {(status === 'seen' || !status) && (
               <span className="badge new">
-                <Sparkle size={13} /> New
+                <Eye size={13} /> Seen
               </span>
             )}
           </div>
