@@ -548,6 +548,278 @@ code {
     font-size: 0.9em;
 }
 
+/* ---------- Progress gauge (setup) ---------- */
+.gauge {
+    width: 100%;
+    height: 34px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    overflow: hidden;
+    box-shadow: 0 4px 0 -1px rgba(47, 42, 36, 0.12);
+}
+
+.gauge-fill {
+    height: 100%;
+    min-width: 56px;
+    background: var(--green);
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 14px;
+}
+
+.gauge-label {
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+}
+
+/* ---------- Questions: number + slider ---------- */
+.q-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+input.q-number {
+    width: 88px;
+    max-width: 88px;
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.q-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 12px;
+    border-radius: 999px;
+    background: var(--cream-2);
+    border: 2px solid var(--ink);
+    outline: none;
+    cursor: pointer;
+}
+
+.q-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--yellow);
+    border: 2px solid var(--ink);
+    box-shadow: 0 3px 0 var(--yellow-deep);
+    cursor: pointer;
+    margin-top: -1px;
+}
+
+.q-slider::-moz-range-thumb {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--yellow);
+    border: 2px solid var(--ink);
+    box-shadow: 0 3px 0 var(--yellow-deep);
+    cursor: pointer;
+}
+
+.q-slider::-moz-range-track {
+    height: 12px;
+    border-radius: 999px;
+    background: var(--cream-2);
+}
+
+/* ---------- Reset ---------- */
+.reset-row { display: flex; justify-content: center; min-height: 48px; }
+
+.reset-btn, button.danger { color: var(--red); border-color: var(--red); box-shadow: 0 4px 0 #d8413f; }
+.reset-btn:active:not(:disabled), button.danger:active:not(:disabled) { box-shadow: 0 0 0 #d8413f; }
+button.danger { background: var(--red); color: #fff; }
+
+.reset-confirm {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-weight: 600;
+    color: var(--ink-soft);
+}
+
+.reset-confirm button { padding: 9px 14px; min-height: 42px; font-size: 14px; }
+
+/* ---------- Install hint ---------- */
+.install-hint {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--fill-yellow);
+    border: 2px solid var(--yellow);
+    border-radius: 18px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow-pop);
+}
+
+.install-icon {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    background: var(--yellow);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    box-shadow: 0 3px 0 var(--ink);
+}
+
+.install-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    text-align: left;
+    font-size: 13px;
+    color: var(--ink-soft);
+}
+
+.install-body strong { font-size: 15px; color: var(--ink); }
+
+.install-steps { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.install-steps svg { vertical-align: middle; }
+
+.install-btn { align-self: flex-start; margin-top: 6px; min-height: 40px; padding: 8px 16px; }
+
+.install-close {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    min-height: 34px;
+    padding: 0;
+    border-radius: 10px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: var(--ink-soft);
+}
+.install-close:active:not(:disabled) { transform: scale(0.9); box-shadow: none; }
+
+/* ---------- Search ---------- */
+.search-launch {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 10px;
+    color: var(--ink-soft);
+    font-weight: 500;
+    background: var(--paper);
+}
+
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-ico {
+    position: absolute;
+    left: 16px;
+    color: var(--ink-faint);
+    pointer-events: none;
+}
+
+input.search-field {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 14px 46px;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 500;
+}
+
+.search-clear {
+    position: absolute;
+    right: 8px;
+    width: 34px;
+    height: 34px;
+    min-height: 34px;
+    padding: 0;
+    border-radius: 10px;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    color: var(--ink-soft);
+}
+.search-clear:active:not(:disabled) { transform: scale(0.9); box-shadow: none; }
+
+.search-hint {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 6px 0;
+}
+
+.search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.result-row {
+    background: var(--paper);
+    border: 2px solid var(--line-strong);
+    border-radius: 16px;
+    padding: 14px 16px;
+    text-align: left;
+    box-shadow: 0 3px 0 -1px rgba(47, 42, 36, 0.06);
+}
+
+.result-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.result-word {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+}
+
+.result-points {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--orange);
+    margin-right: auto;
+}
+
+.result-def {
+    font-size: 15px;
+    color: var(--ink);
+    line-height: 1.45;
+}
+
+.result-group {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    background: var(--cream-2);
+    border: 1px solid var(--line-strong);
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
 /* ---------- Confetti ---------- */
 .confetti-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 50; }
 .confetti-piece { position: absolute; top: -16px; width: 10px; height: 14px; border-radius: 2px; }

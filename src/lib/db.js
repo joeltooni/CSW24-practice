@@ -29,3 +29,14 @@ export const getProgress = async () => {
     request.onsuccess = () => resolve(request.result)
   })
 }
+
+// Wipe all saved progress (mastered / needs-practice).
+export const clearProgress = async () => {
+  const db = await openDB()
+  const tx = db.transaction('progress', 'readwrite')
+  tx.objectStore('progress').clear()
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve()
+    tx.onerror = () => reject(tx.error)
+  })
+}

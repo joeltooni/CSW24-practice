@@ -14,8 +14,45 @@ export const calculateScore = (word) =>
 
 const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5)
 
+// Category filter: length buckets plus the high-value "jqxz" letter category.
+export const matchesLength = (word, sel) => {
+  if (sel === 'mix') return true
+  if (sel === '7-8') return word.length === 7 || word.length === 8
+  if (sel === 'jqxz') return /[JQXZ]/.test(word.word.toUpperCase())
+  if (sel === 'q-no-u') return /Q(?!U)/i.test(word.word) // a Q not followed by U
+  return word.length === parseInt(sel, 10)
+}
+
+// Normalize a raw word entry (from any extra category file) into the shape the
+// app expects, filling in sensible defaults for anything missing.
+export const normalizeWord = (raw, i = 0) => {
+  const word = String(raw.word || '').toUpperCase()
+  return {
+    id: raw.id ?? 100000 + i,
+    word,
+    length: raw.length ?? word.length,
+    points: raw.points ?? calculateScore(word),
+    definition: raw.definition ?? '',
+    exampleSentence: raw.exampleSentence ?? raw.example ?? '',
+    group: raw.group ?? `${word.length}-Letter`,
+    rarity: raw.rarity ?? 'rare',
+    difficulty: raw.difficulty ?? 'hard',
+  }
+}
+
+// Accept either a bare array or a { words: [...] } object; ignore junk/empty.
+export const extractWords = (data) => {
+  const arr = Array.isArray(data) ? data : Array.isArray(data?.words) ? data.words : []
+  return arr.filter((w) => w && w.word).map((w, i) => normalizeWord(w, i))
+}
+
 const generateFillTheGap = (word, allWords) => {
-  const gapSentence = word.exampleSentence.replace(word.word, '____')
+  // Blank the target word case-insensitively (sentences may store it lowercase).
+  const boundary = new RegExp(`\\b${word.word}\\b`, 'i')
+  let gapSentence = word.exampleSentence.replace(boundary, '____')
+  if (gapSentence === word.exampleSentence) {
+    gapSentence = word.exampleSentence.replace(new RegExp(word.word, 'i'), '____')
+  }
   const wrongWords = shuffle(
     allWords.filter((w) => w.word !== word.word && w.length === word.length),
   ).slice(0, 2)
@@ -77,10 +114,7 @@ const generators = [
 export const generateQuiz = (wordData, questionCount, length, progress) => {
   if (!wordData) return []
 
-  let filteredWords = wordData.words
-  if (length !== 'mix') {
-    filteredWords = filteredWords.filter((w) => w.length === parseInt(length, 10))
-  }
+  const filteredWords = wordData.words.filter((w) => matchesLength(w, length))
 
   const rareWords = filteredWords.filter((w) => w.rarity === 'rare')
   const commonWords = filteredWords.filter((w) => w.rarity === 'common')

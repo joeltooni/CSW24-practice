@@ -1,9 +1,23 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { LoaderCircle, SpellCheck2, AlertTriangle } from 'lucide-react'
-import { getProgress, saveProgress } from './lib/db.js'
-import { generateQuiz } from './lib/quiz.js'
+import { getProgress, saveProgress, clearProgress } from './lib/db.js'
+import { generateQuiz, matchesLength, extractWords } from './lib/quiz.js'
+
+// Extra category files merged on top of the core word list. Add more here.
+const EXTRA_WORD_FILES = ['./7-8_letters_updated.json', './jqxz.json', './q-not-qu.json']
+
+const fetchJsonSafe = async (url) => {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return null
+    return await res.json()
+  } catch {
+    return null // missing / empty / invalid — just skip it
+  }
+}
 import SetupScreen from './components/SetupScreen.jsx'
+import SearchScreen from './components/SearchScreen.jsx'
 import StudyScreen from './components/StudyScreen.jsx'
 import QuizScreen from './components/QuizScreen.jsx'
 import ResultsScreen from './components/ResultsScreen.jsx'
@@ -30,9 +44,29 @@ export default function App() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('./words-data.json')
-        const data = await res.json()
-        setWordData(data)
+        const data = await fetchJsonSafe('./words-data.json')
+        if (!data) throw new Error('core word data missing')
+
+        // Merge any extra category files (e.g. 7–8 letter words). Dedupe by
+        // word against the base list AND across the category files, so a word
+        // that appears in several files is only added once.
+        const extras = await Promise.all(EXTRA_WORD_FILES.map(fetchJsonSafe))
+        const extraWords = extras.flatMap(extractWords)
+        const seen = new Set(data.words.map((w) => w.word))
+        const merged = []
+        for (const w of extraWords) {
+          if (seen.has(w.word)) continue
+          seen.add(w.word)
+          merged.push(w)
+        }
+        const extraGroups = [...new Set(merged.map((w) => w.group))].filter(
+          (g) => !(data.groups || []).includes(g),
+        )
+
+        setWordData({
+          words: [...data.words, ...merged],
+          groups: [...(data.groups || []), ...extraGroups],
+        })
 
         const progressData = await getProgress()
         const map = {}
@@ -50,9 +84,16 @@ export default function App() {
 
   const getStudyWords = () => {
     if (!wordData) return []
-    if (selectedWordLength === 'mix') return wordData.words
-    return wordData.words.filter((w) => w.length === parseInt(selectedWordLength, 10))
+    return wordData.words.filter((w) => matchesLength(w, selectedWordLength))
   }
+
+  // When the length changes, keep the question count within what's available.
+  useEffect(() => {
+    if (!wordData) return
+    const available = wordData.words.filter((w) => matchesLength(w, selectedWordLength)).length
+    const cap = Math.min(100, Math.max(1, available))
+    setSessionQuestions((q) => Math.min(q, cap))
+  }, [selectedWordLength, wordData])
 
   const masteredCount = Object.values(progress).filter((p) => p === 'mastered').length
   const needsPracticeCount = Object.values(progress).filter((p) => p === 'needs-practice').length
@@ -76,6 +117,11 @@ export default function App() {
   const markProgress = (word, status) => {
     saveProgress(word, status)
     setProgress((prev) => ({ ...prev, [word]: status }))
+  }
+
+  const resetProgress = async () => {
+    await clearProgress()
+    setProgress({})
   }
 
   const handleQuizAnswer = (answer) => {
@@ -173,6 +219,16 @@ export default function App() {
             availableCount={getStudyWords().length}
             onStudy={startStudy}
             onQuiz={startQuiz}
+            onReset={resetProgress}
+            onSearch={() => setScreen('search')}
+          />
+        )}
+
+        {screen === 'search' && (
+          <SearchScreen
+            words={wordData.words}
+            progress={progress}
+            onExit={() => setScreen('setup')}
           />
         )}
 
