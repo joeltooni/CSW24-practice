@@ -21,7 +21,6 @@ const BASE_LENGTHS = [
   { id: 'mix', label: 'All' },
   { id: '2', label: '2-Letter' },
   { id: '3', label: '3-Letter' },
-  { id: '4', label: '4-Letter' },
 ]
 
 export default function SetupScreen({
@@ -33,6 +32,7 @@ export default function SetupScreen({
   sessionQuestions,
   setSessionQuestions,
   availableCount,
+  categories = [],
   onStudy,
   onQuiz,
   onReset,
@@ -51,6 +51,7 @@ export default function SetupScreen({
     ...(hasLong ? [{ id: '7-8', label: '7–8' }] : []),
     ...(hasJQXZ ? [{ id: 'jqxz', label: 'JQXZ' }] : []),
     ...(hasQnoU ? [{ id: 'q-no-u', label: 'Q (no U)' }] : []),
+    ...categories, // curated category chips (e.g. Vowels, Dumps)
   ]
 
   const maxQuestions = Math.min(100, Math.max(1, availableCount))

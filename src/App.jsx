@@ -4,8 +4,16 @@ import { LoaderCircle, SpellCheck2, AlertTriangle } from 'lucide-react'
 import { getProgress, saveProgress, clearProgress } from './lib/db.js'
 import { generateQuiz, matchesLength, extractWords } from './lib/quiz.js'
 
-// Extra category files merged on top of the core word list. Add more here.
-const EXTRA_WORD_FILES = ['./7-8_letters_updated.json', './jqxz.json', './q-not-qu.json']
+// Extra word files merged on top of the core list. A `category` marks a curated
+// category (its words are tagged so a chip can filter to exactly that set); files
+// without one are matched by a derived rule (length / letters). Add more here.
+const EXTRA_WORD_FILES = [
+  { file: './7-8_letters_updated.json' },
+  { file: './jqxz.json' },
+  { file: './q-not-qu.json' },
+  { file: './vowels.json', category: 'vowels', label: 'Vowels' },
+  { file: './dumps.json', category: 'dumps', label: 'Dumps' },
+]
 
 const fetchJsonSafe = async (url) => {
   try {
@@ -47,26 +55,36 @@ export default function App() {
         const data = await fetchJsonSafe('./words-data.json')
         if (!data) throw new Error('core word data missing')
 
-        // Merge any extra category files (e.g. 7–8 letter words). Dedupe by
-        // word against the base list AND across the category files, so a word
-        // that appears in several files is only added once.
-        const extras = await Promise.all(EXTRA_WORD_FILES.map(fetchJsonSafe))
-        const extraWords = extras.flatMap(extractWords)
-        const seen = new Set(data.words.map((w) => w.word))
-        const merged = []
-        for (const w of extraWords) {
-          if (seen.has(w.word)) continue
-          seen.add(w.word)
-          merged.push(w)
-        }
-        const extraGroups = [...new Set(merged.map((w) => w.group))].filter(
-          (g) => !(data.groups || []).includes(g),
-        )
-
-        setWordData({
-          words: [...data.words, ...merged],
-          groups: [...(data.groups || []), ...extraGroups],
+        // Merge extra files, tagging curated-category words. Dedupe by spelling
+        // across the base list and every file, unioning category tags so a word
+        // shared by several files keeps all its categories and appears once.
+        const extras = await Promise.all(EXTRA_WORD_FILES.map((e) => fetchJsonSafe(e.file)))
+        const extraWords = extras.flatMap((d, i) => {
+          const cat = EXTRA_WORD_FILES[i].category
+          const ws = extractWords(d)
+          return cat ? ws.map((w) => ({ ...w, categories: [cat] })) : ws
         })
+
+        const byWord = new Map()
+        const addWord = (w) => {
+          const existing = byWord.get(w.word)
+          if (existing) {
+            for (const c of w.categories || []) {
+              if (!existing.categories.includes(c)) existing.categories.push(c)
+            }
+          } else {
+            byWord.set(w.word, { ...w, categories: [...(w.categories || [])] })
+          }
+        }
+        data.words.forEach(addWord)
+        extraWords.forEach(addWord)
+
+        const words = [...byWord.values()]
+        const groups = [
+          ...new Set([...(data.groups || []), ...words.map((w) => w.group).filter(Boolean)]),
+        ]
+
+        setWordData({ words, groups })
 
         const progressData = await getProgress()
         const map = {}
@@ -217,6 +235,9 @@ export default function App() {
             sessionQuestions={sessionQuestions}
             setSessionQuestions={setSessionQuestions}
             availableCount={getStudyWords().length}
+            categories={EXTRA_WORD_FILES.filter(
+              (e) => e.category && wordData.words.some((w) => w.categories?.includes(e.category)),
+            ).map((e) => ({ id: e.category, label: e.label }))}
             onStudy={startStudy}
             onQuiz={startQuiz}
             onReset={resetProgress}

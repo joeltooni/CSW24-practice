@@ -14,13 +14,15 @@ export const calculateScore = (word) =>
 
 const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5)
 
-// Category filter: length buckets plus the high-value "jqxz" letter category.
+// Category filter: length buckets, derived letter categories, and curated
+// category tags (e.g. vowels, dumps) carried on word.categories.
 export const matchesLength = (word, sel) => {
   if (sel === 'mix') return true
   if (sel === '7-8') return word.length === 7 || word.length === 8
   if (sel === 'jqxz') return /[JQXZ]/.test(word.word.toUpperCase())
   if (sel === 'q-no-u') return /Q(?!U)/i.test(word.word) // a Q not followed by U
-  return word.length === parseInt(sel, 10)
+  if (/^\d+$/.test(sel)) return word.length === parseInt(sel, 10)
+  return Array.isArray(word.categories) && word.categories.includes(sel)
 }
 
 // Normalize a raw word entry (from any extra category file) into the shape the

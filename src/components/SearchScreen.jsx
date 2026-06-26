@@ -9,18 +9,24 @@ export default function SearchScreen({ words, progress, onExit }) {
   const query = q.trim().toLowerCase()
 
   // Rank: exact > starts-with > contains > definition match.
+  // Each word is shown once even if it belongs to several categories.
   const results = useMemo(() => {
     if (!query) return []
     const qu = query.toUpperCase()
     const scored = []
+    const seen = new Set()
     for (const w of words) {
       const word = w.word.toUpperCase()
+      if (seen.has(word)) continue
       let rank = -1
       if (word === qu) rank = 0
       else if (word.startsWith(qu)) rank = 1
       else if (word.includes(qu)) rank = 2
       else if (w.definition?.toLowerCase().includes(query)) rank = 3
-      if (rank >= 0) scored.push({ w, rank })
+      if (rank >= 0) {
+        seen.add(word)
+        scored.push({ w, rank })
+      }
     }
     scored.sort((a, b) => a.rank - b.rank || a.w.word.localeCompare(b.w.word))
     return scored.map((s) => s.w)
