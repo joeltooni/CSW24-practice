@@ -1,0 +1,33 @@
+{
+  "name": "CSW24 Scrabble Tournament Trainer",
+  "short_name": "Scrabble Trainer",
+  "description": "Learn rare high-scoring Scrabble words with interactive quizzes and progress tracking",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fff6e3",
+  "theme_color": "#fff6e3",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23fbc23d' width='192' height='192'/><text x='96' y='128' font-size='110' font-weight='bold' fill='%232f2a24' text-anchor='middle' font-family='Arial'>S</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%23fbc23d' width='512' height='512'/><text x='256' y='340' font-size='290' font-weight='bold' fill='%232f2a24' text-anchor='middle' font-family='Arial'>S</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "games"],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%23f5f5f5' width='540' height='720'/><text x='270' y='100' font-size='32' font-weight='bold' text-anchor='middle' font-family='Arial'>Scrabble Trainer</text></svg>",
+      "sizes": "540x720",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ]
+}
