@@ -37,6 +37,7 @@ export default function SetupScreen({
   onQuiz,
   onReset,
   onSearch,
+  onShowMastered,
 }) {
   const total = wordData.words.length
   const progressPct = Math.round((masteredCount / total) * 100)
@@ -89,7 +90,7 @@ export default function SetupScreen({
 
       <div className="stats-grid">
         <StatCard variant="info" icon={Library} label="Words" value={total} delay={0.05} />
-        <StatCard variant="success" icon={CheckCircle2} label="Mastered" value={masteredCount} delay={0.1} />
+        <StatCard variant="success" icon={CheckCircle2} label="Mastered" value={masteredCount} delay={0.1} onClick={onShowMastered} />
         <StatCard variant="warning" icon={AlertTriangle} label="Practice" value={needsPracticeCount} delay={0.15} />
         <StatCard variant="accent" icon={TrendingUp} label="Progress" value={progressPct} suffix="%" delay={0.2} />
       </div>

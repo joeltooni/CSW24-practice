@@ -15,6 +15,22 @@ const EXTRA_WORD_FILES = [
   { file: './dumps.json', category: 'dumps', label: 'Dumps' },
 ]
 
+// Full list of category chips (excluding "All") available for the given words —
+// derived length/letter categories plus curated tag categories that have words.
+const buildCategories = (words) => {
+  const cats = [
+    { id: '2', label: '2-Letter' },
+    { id: '3', label: '3-Letter' },
+  ]
+  if (words.some((w) => w.length === 7 || w.length === 8)) cats.push({ id: '7-8', label: '7–8' })
+  if (words.some((w) => /[JQXZ]/.test(w.word.toUpperCase()))) cats.push({ id: 'jqxz', label: 'JQXZ' })
+  if (words.some((w) => /Q(?!U)/i.test(w.word))) cats.push({ id: 'q-no-u', label: 'Q (no U)' })
+  EXTRA_WORD_FILES.filter(
+    (e) => e.category && words.some((w) => w.categories?.includes(e.category)),
+  ).forEach((e) => cats.push({ id: e.category, label: e.label }))
+  return cats
+}
+
 const fetchJsonSafe = async (url) => {
   try {
     const res = await fetch(url)
@@ -26,6 +42,7 @@ const fetchJsonSafe = async (url) => {
 }
 import SetupScreen from './components/SetupScreen.jsx'
 import SearchScreen from './components/SearchScreen.jsx'
+import MasteredScreen from './components/MasteredScreen.jsx'
 import StudyScreen from './components/StudyScreen.jsx'
 import QuizScreen from './components/QuizScreen.jsx'
 import ResultsScreen from './components/ResultsScreen.jsx'
@@ -262,6 +279,16 @@ export default function App() {
             onQuiz={startQuiz}
             onReset={resetProgress}
             onSearch={() => setScreen('search')}
+            onShowMastered={() => setScreen('mastered')}
+          />
+        )}
+
+        {screen === 'mastered' && (
+          <MasteredScreen
+            words={wordData.words}
+            progress={progress}
+            categories={buildCategories(wordData.words)}
+            onExit={() => setScreen('setup')}
           />
         )}
 

@@ -820,6 +820,41 @@ input.search-field {
     border-radius: 999px;
 }
 
+/* ---------- Mastered breakdown ---------- */
+.stat-card.tappable { cursor: pointer; }
+
+.cat-breakdown {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cat-chip {
+    padding: 8px 12px;
+    min-height: 42px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.cat-chip.active {
+    background: var(--yellow);
+    border-color: var(--yellow-deep);
+    box-shadow: 0 4px 0 var(--yellow-deep);
+}
+.cat-chip.active:active:not(:disabled) { box-shadow: 0 0 0 var(--yellow-deep); }
+
+.cat-count {
+    background: var(--cream-2);
+    border-radius: 999px;
+    padding: 1px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+}
+.cat-chip.active .cat-count { background: rgba(47, 42, 36, 0.16); color: var(--ink); }
+
 /* ---------- Confetti ---------- */
 .confetti-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 50; }
 .confetti-piece { position: absolute; top: -16px; width: 10px; height: 14px; border-radius: 2px; }

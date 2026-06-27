@@ -15,10 +15,12 @@ export function AnimatedNumber({ value, suffix = '' }) {
   return <motion.span>{rounded}</motion.span>
 }
 
-export function StatCard({ variant, label, value, suffix = '', icon: Icon, delay = 0 }) {
+export function StatCard({ variant, label, value, suffix = '', icon: Icon, delay = 0, onClick }) {
   return (
     <motion.div
-      className={`stat-card ${variant}`}
+      className={`stat-card ${variant} ${onClick ? 'tappable' : ''}`}
+      onClick={onClick}
+      whileTap={onClick ? { scale: 0.96 } : undefined}
       initial={{ opacity: 0, y: 16, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ delay, type: 'spring', stiffness: 260, damping: 20 }}
