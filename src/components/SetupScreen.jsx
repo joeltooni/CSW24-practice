@@ -13,6 +13,7 @@ import {
   Hash,
   RotateCcw,
   Search,
+  Gamepad2,
 } from 'lucide-react'
 import { StatCard } from './Shared.jsx'
 import InstallHint from './InstallHint.jsx'
@@ -35,6 +36,7 @@ export default function SetupScreen({
   categories = [],
   onStudy,
   onQuiz,
+  onPlay,
   onReset,
   onSearch,
   onShowMastered,
@@ -167,6 +169,10 @@ export default function SetupScreen({
             <Zap size={18} /> Quiz Mode
           </motion.button>
         </div>
+
+        <motion.button className="play" onClick={onPlay} whileTap={{ scale: 0.97 }}>
+          <Gamepad2 size={18} /> Play on Board
+        </motion.button>
       </motion.div>
 
       {/* Reset progress */}

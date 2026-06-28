@@ -855,6 +855,171 @@ input.search-field {
 }
 .cat-chip.active .cat-count { background: rgba(47, 42, 36, 0.16); color: var(--ink); }
 
+/* ---------- Play on Board button ---------- */
+button.play {
+    width: 100%;
+    background: var(--teal);
+    color: #fff;
+    border-color: #2f9486;
+    box-shadow: 0 4px 0 #2f9486;
+}
+button.play:active:not(:disabled) { box-shadow: 0 0 0 #2f9486; }
+
+/* ---------- Board Challenge ---------- */
+.board-prompt {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    line-height: 1.5;
+}
+
+.board-wrap { display: flex; justify-content: center; margin: 8px 0 2px; }
+
+.board-grid {
+    display: grid;
+    gap: 3px;
+    width: 100%;
+    max-width: 360px;
+    background: var(--line-strong);
+    border: 2px solid var(--ink);
+    border-radius: 14px;
+    padding: 5px;
+    box-shadow: 0 5px 0 -1px rgba(47, 42, 36, 0.12);
+}
+
+.bcell {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 5px;
+    background: var(--cream);
+    display: grid;
+    place-items: center;
+    user-select: none;
+}
+
+.bcell .prem-label {
+    font-size: clamp(7px, 1.9vw, 10px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    opacity: 0.85;
+}
+
+.bcell.prem-dl { background: #dce9ff; color: #5d83d6; }
+.bcell.prem-tl { background: #c8def9; color: #3f6fc4; }
+.bcell.prem-tw { background: #ffd0c4; color: #d8431f; }
+.bcell.star    { background: #ffe0d6; color: #e0673f; }
+.bcell.star .prem-label { font-size: clamp(11px, 3vw, 16px); }
+
+.bcell.slot {
+    background: var(--fill-yellow);
+    border: 2px dashed var(--yellow-deep);
+}
+.bcell.slot.next { animation: slotpulse 1.1s ease-in-out infinite; }
+
+@keyframes slotpulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(226, 166, 35, 0.55); }
+    50%      { box-shadow: 0 0 0 5px rgba(226, 166, 35, 0); }
+}
+
+.btile {
+    position: absolute;
+    inset: 1px;
+    border-radius: 5px;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    color: var(--ink);
+    background: var(--yellow);
+    border: 1.5px solid var(--ink);
+    font-size: clamp(11px, 3.2vw, 17px);
+    line-height: 1;
+    text-transform: uppercase;
+    min-height: 0;
+    box-shadow: none;
+    padding: 0;
+}
+
+.btile.context { background: var(--cream-2); color: var(--ink-soft); border-color: var(--line-strong); }
+.btile.placed { cursor: pointer; }
+.btile.placed:active { transform: scale(0.92); }
+.btile.reveal { background: var(--fill-green); color: var(--green-deep); border-color: var(--green); }
+
+.btile .bpts {
+    position: absolute;
+    right: 2px;
+    bottom: 1px;
+    font-size: clamp(6px, 1.5vw, 8px);
+    font-weight: 600;
+    color: var(--yellow-deep);
+    opacity: 0.85;
+}
+.btile.context .bpts { color: var(--ink-faint); }
+.btile.reveal .bpts { color: var(--green-deep); }
+
+.rack-wrap { margin-top: 14px; }
+
+.rack-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.rack { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+.rtile {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
+    padding: 0;
+    font-size: 21px;
+    font-weight: 700;
+    background: var(--yellow);
+    border-color: var(--ink);
+    box-shadow: 0 4px 0 var(--yellow-deep);
+    text-transform: uppercase;
+}
+.rtile:disabled { opacity: 0.25; box-shadow: 0 4px 0 rgba(47, 42, 36, 0.2); }
+
+.rtile .bpts {
+    position: absolute;
+    right: 5px;
+    bottom: 3px;
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--yellow-deep);
+    opacity: 0.9;
+}
+
+.board-hint {
+    margin-top: 16px;
+    background: var(--fill-purple);
+    border: 2px solid var(--purple);
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.45;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+.board-hint svg { flex-shrink: 0; color: var(--purple); }
+
+@keyframes shakex {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+}
+
 /* ---------- Confetti ---------- */
 .confetti-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 50; }
 .confetti-piece { position: absolute; top: -16px; width: 10px; height: 14px; border-radius: 2px; }

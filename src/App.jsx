@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { LoaderCircle, SpellCheck2, AlertTriangle, BookOpen } from 'lucide-react'
 import { getProgress, saveProgress, clearProgress } from './lib/db.js'
 import { generateQuiz, matchesLength, extractWords } from './lib/quiz.js'
+import { generateBoardChallenges } from './lib/board.js'
 
 // Extra word files merged on top of the core list. A `category` marks a curated
 // category (its words are tagged so a chip can filter to exactly that set); files
@@ -45,12 +46,13 @@ import SearchScreen from './components/SearchScreen.jsx'
 import MasteredScreen from './components/MasteredScreen.jsx'
 import StudyScreen from './components/StudyScreen.jsx'
 import QuizScreen from './components/QuizScreen.jsx'
+import BoardScreen from './components/BoardScreen.jsx'
 import ResultsScreen from './components/ResultsScreen.jsx'
 
 export default function App() {
   const [wordData, setWordData] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [screen, setScreen] = useState('setup') // setup | study | quiz | results
+  const [screen, setScreen] = useState('setup') // setup | study | quiz | board | results
   const [sessionQuestions, setSessionQuestions] = useState(15)
   const [progress, setProgress] = useState({})
   const [selectedWordLength, setSelectedWordLength] = useState('mix')
@@ -65,6 +67,9 @@ export default function App() {
 
   // Study state
   const [studyIndex, setStudyIndex] = useState(0)
+
+  // Board Challenge state
+  const [boardChallenges, setBoardChallenges] = useState([])
 
   useEffect(() => {
     const load = async () => {
@@ -167,6 +172,12 @@ export default function App() {
     setFeedback(null)
     setPicked(null)
     setScreen('quiz')
+  }
+
+  const startBoard = () => {
+    const generated = generateBoardChallenges(wordData, sessionQuestions, selectedWordLength, progress)
+    setBoardChallenges(generated)
+    setScreen('board')
   }
 
   const markProgress = (word, status) => {
@@ -277,6 +288,7 @@ export default function App() {
             ).map((e) => ({ id: e.category, label: e.label }))}
             onStudy={startStudy}
             onQuiz={startQuiz}
+            onPlay={startBoard}
             onReset={resetProgress}
             onSearch={() => setScreen('search')}
             onShowMastered={() => setScreen('mastered')}
@@ -335,6 +347,32 @@ export default function App() {
                 <p style={{ marginTop: 8, color: 'var(--ink-soft)' }}>
                   You haven't studied any words in this category yet. Study them, then come back to
                   quiz yourself on what you've seen.
+                </p>
+                <div className="navigation">
+                  <button className="primary" onClick={startStudy}>
+                    <BookOpen size={18} /> Study Mode
+                  </button>
+                  <button onClick={() => setScreen('setup')}>Back to Menu</button>
+                </div>
+              </div>
+            </div>
+          ))}
+
+        {screen === 'board' &&
+          (boardChallenges.length > 0 ? (
+            <BoardScreen
+              challenges={boardChallenges}
+              onResult={markProgress}
+              onExit={() => setScreen('setup')}
+            />
+          ) : (
+            <div className="container">
+              <div className="card">
+                <BookOpen size={36} color="var(--accent)" style={{ marginBottom: 10 }} />
+                <h2>Study these words first</h2>
+                <p style={{ marginTop: 8, color: 'var(--ink-soft)' }}>
+                  Board Challenge only uses words you've already studied in this category. Study
+                  some first, then come back to place them on the board.
                 </p>
                 <div className="navigation">
                   <button className="primary" onClick={startStudy}>
