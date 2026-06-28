@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { LoaderCircle, SpellCheck2, AlertTriangle, BookOpen } from 'lucide-react'
 import { getProgress, saveProgress, clearProgress } from './lib/db.js'
 import { generateQuiz, matchesLength, extractWords } from './lib/quiz.js'
-import { generateBoardChallenges } from './lib/board.js'
+import { generateBoardChallenges, buildWordSet } from './lib/board.js'
 
 // Extra word files merged on top of the core list. A `category` marks a curated
 // category (its words are tagged so a chip can filter to exactly that set); files
@@ -362,6 +362,7 @@ export default function App() {
           (boardChallenges.length > 0 ? (
             <BoardScreen
               challenges={boardChallenges}
+              validWords={buildWordSet(wordData)}
               onResult={markProgress}
               onExit={() => setScreen('setup')}
             />

@@ -895,7 +895,16 @@ button.play:active:not(:disabled) { box-shadow: 0 0 0 #2f9486; }
     display: grid;
     place-items: center;
     user-select: none;
+    /* reset button defaults for cells rendered as <button> */
+    border: none;
+    box-shadow: none;
+    min-height: 0;
+    padding: 0;
+    font-family: var(--font);
+    cursor: default;
 }
+.bcell:active:not(:disabled) { transform: none; box-shadow: none; }
+.bcell.placeable { cursor: pointer; }
 
 .bcell .prem-label {
     font-size: clamp(7px, 1.9vw, 10px);
@@ -940,9 +949,13 @@ button.play:active:not(:disabled) { box-shadow: 0 0 0 #2f9486; }
 }
 
 .btile.context { background: var(--cream-2); color: var(--ink-soft); border-color: var(--line-strong); }
-.btile.placed { cursor: pointer; }
-.btile.placed:active { transform: scale(0.92); }
+.btile.pending { background: var(--teal); color: #fff; border-color: #2f9486; cursor: pointer; }
+.btile.pending:active { transform: scale(0.92); }
 .btile.reveal { background: var(--fill-green); color: var(--green-deep); border-color: var(--green); }
+
+/* empty cell highlight while a rack tile is "picked up" */
+.bcell.placeable { box-shadow: inset 0 0 0 2px rgba(70, 182, 164, 0.55); }
+.bcell.placeable:active { transform: scale(0.94); }
 
 .btile .bpts {
     position: absolute;
@@ -984,6 +997,7 @@ button.play:active:not(:disabled) { box-shadow: 0 0 0 #2f9486; }
     text-transform: uppercase;
 }
 .rtile:disabled { opacity: 0.25; box-shadow: 0 4px 0 rgba(47, 42, 36, 0.2); }
+.rtile.sel { transform: translateY(-6px); box-shadow: 0 10px 0 var(--yellow-deep); border-color: var(--orange); }
 
 .rtile .bpts {
     position: absolute;
@@ -994,6 +1008,28 @@ button.play:active:not(:disabled) { box-shadow: 0 0 0 #2f9486; }
     color: var(--yellow-deep);
     opacity: 0.9;
 }
+
+.board-status {
+    min-height: 30px;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.word-now {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 6px 16px;
+    border-radius: 999px;
+}
+.word-now.ok { background: var(--fill-green); color: var(--green-deep); border: 2px solid var(--green); }
+
+.board-note { font-size: 14px; font-weight: 500; color: var(--ink-soft); text-align: center; }
 
 .board-hint {
     margin-top: 16px;

@@ -12,12 +12,13 @@ import {
   ArrowRight,
   Trophy,
   CircleDot,
+  Undo2,
+  Send,
 } from 'lucide-react'
 import { scrabbleValues } from '../lib/quiz.js'
-import { cellKey, scoreWord } from '../lib/board.js'
+import { cellKey, validatePlay } from '../lib/board.js'
 import { Confetti, StatCard } from './Shared.jsx'
 
-// Background tint class for a premium square.
 const premClass = (p) => {
   if (!p) return ''
   if (p.label === '★') return 'star'
@@ -26,27 +27,35 @@ const premClass = (p) => {
   return 'prem-tw'
 }
 
-export default function BoardScreen({ challenges, onResult, onExit }) {
+export default function BoardScreen({ challenges, validWords, onResult, onExit }) {
   const [index, setIndex] = useState(0)
-  const [placements, setPlacements] = useState({}) // "r,c" -> { id, ch }
+  const [pending, setPending] = useState({}) // "r,c" -> { id, ch }
+  const [selectedId, setSelectedId] = useState(null) // rack tile picked up
   const [hintShown, setHintShown] = useState(false)
   const [status, setStatus] = useState('playing') // playing | solved | revealed
   const [shake, setShake] = useState(0)
   const [rackOrder, setRackOrder] = useState([])
   const [stats, setStats] = useState({ solved: 0, revealed: 0, score: 0 })
+  const [solvedPlay, setSolvedPlay] = useState(null) // { word, score }
   const [done, setDone] = useState(false)
 
   const puzzle = challenges[index]
 
   useEffect(() => {
-    setPlacements({})
+    setPending({})
+    setSelectedId(null)
     setHintShown(false)
     setStatus('playing')
     setShake(0)
+    setSolvedPlay(null)
     if (puzzle) setRackOrder(puzzle.rack.map((t) => t.id))
   }, [index, puzzle])
 
-  const points = useMemo(() => (puzzle ? scoreWord(puzzle) : 0), [puzzle])
+  // Live read of the word currently being formed.
+  const preview = useMemo(() => {
+    if (!puzzle || Object.keys(pending).length === 0) return null
+    return validatePlay(puzzle, pending, validWords)
+  }, [puzzle, pending, validWords])
 
   if (!puzzle) return null
 
@@ -65,10 +74,10 @@ export default function BoardScreen({ challenges, onResult, onExit }) {
             <Trophy size={26} color="var(--yellow-deep)" /> Board complete!
           </div>
           <p style={{ marginTop: 10, color: 'var(--ink-soft)' }}>
-            You placed {stats.solved} of {total} words on your own.
+            You played {stats.solved} of {total} words for {stats.score} points.
           </p>
           <div className="stats-grid" style={{ marginTop: 18 }}>
-            <StatCard variant="success" icon={Check} label="Placed" value={stats.solved} />
+            <StatCard variant="success" icon={Check} label="Played" value={stats.solved} />
             <StatCard variant="warning" icon={Eye} label="Revealed" value={stats.revealed} />
             <StatCard variant="info" icon={Coins} label="Score" value={stats.score} />
             <StatCard variant="accent" icon={LayoutGrid} label="Boards" value={total} />
@@ -83,46 +92,62 @@ export default function BoardScreen({ challenges, onResult, onExit }) {
     )
   }
 
-  const usedIds = new Set(Object.values(placements).map((t) => t.id))
-  const firstOpen = puzzle.slots.findIndex((s) => !placements[cellKey(s.r, s.c)])
   const target = puzzle.target
+  const usedIds = new Set(Object.values(pending).map((t) => t.id))
+  const rackTiles = rackOrder.map((id) => puzzle.rack.find((t) => t.id === id))
+  const last = index === challenges.length - 1
 
-  const evaluate = (next) => {
-    const formed = puzzle.targetCells
-      .map((cell) => (cell.pre ? cell.ch : next[cellKey(cell.r, cell.c)]?.ch || ''))
-      .join('')
-    if (formed === target.word) {
+  const tapRackTile = (t) => {
+    if (status !== 'playing' || usedIds.has(t.id)) return
+    setSelectedId((id) => (id === t.id ? null : t.id))
+  }
+
+  const tapCell = (r, c) => {
+    if (status !== 'playing') return
+    const key = cellKey(r, c)
+    if (puzzle.committed.has(key)) return
+    if (pending[key]) {
+      // recall this tile back to the rack
+      setPending((p) => {
+        const n = { ...p }
+        delete n[key]
+        return n
+      })
+      return
+    }
+    if (selectedId == null) return
+    const tile = puzzle.rack.find((t) => t.id === selectedId)
+    if (!tile || usedIds.has(tile.id)) return
+    setPending((p) => ({ ...p, [key]: { id: tile.id, ch: tile.ch } }))
+    setSelectedId(null)
+  }
+
+  const recallAll = () => {
+    if (status !== 'playing') return
+    setPending({})
+    setSelectedId(null)
+  }
+
+  const shuffleRack = () => setRackOrder((ids) => [...ids].sort(() => Math.random() - 0.5))
+
+  const playWord = () => {
+    if (status !== 'playing') return
+    const res = validatePlay(puzzle, pending, validWords)
+    if (res.ok) {
       setStatus('solved')
-      setStats((s) => ({ ...s, solved: s.solved + 1, score: s.score + points }))
-      onResult(target.word, 'mastered')
+      setSolvedPlay({ word: res.word, score: res.score })
+      setStats((s) => ({ ...s, solved: s.solved + 1, score: s.score + res.score }))
+      onResult(res.word, 'mastered')
     } else {
       setShake((n) => n + 1)
-      setTimeout(() => {
-        setPlacements((p) => (Object.keys(p).length === puzzle.slots.length ? {} : p))
-      }, 520)
     }
-  }
-
-  const placeTile = (tile) => {
-    if (status !== 'playing' || usedIds.has(tile.id) || firstOpen === -1) return
-    const slot = puzzle.slots[firstOpen]
-    const next = { ...placements, [cellKey(slot.r, slot.c)]: tile }
-    setPlacements(next)
-    if (Object.keys(next).length === puzzle.slots.length) evaluate(next)
-  }
-
-  const removeSlot = (key) => {
-    if (status !== 'playing') return
-    setPlacements((p) => {
-      const n = { ...p }
-      delete n[key]
-      return n
-    })
   }
 
   const reveal = () => {
     if (status !== 'playing') return
     setStatus('revealed')
+    setPending({})
+    setSelectedId(null)
     setStats((s) => ({ ...s, revealed: s.revealed + 1 }))
     onResult(target.word, 'needs-practice')
   }
@@ -132,54 +157,54 @@ export default function BoardScreen({ challenges, onResult, onExit }) {
     else setDone(true)
   }
 
-  const shuffleRack = () => setRackOrder((ids) => [...ids].sort(() => Math.random() - 0.5))
+  // Cells the target occupies (for Reveal display).
+  const revealCells = new Map(puzzle.targetPlacement.map((c) => [cellKey(c.r, c.c), c.ch]))
 
-  const rackTiles = rackOrder.map((id) => puzzle.rack.find((t) => t.id === id))
-  const last = index === challenges.length - 1
-
-  // Render the board cell by cell.
   const cells = []
   for (let r = 0; r < puzzle.size; r++) {
     for (let c = 0; c < puzzle.size; c++) {
       const key = cellKey(r, c)
-      const pre = puzzle.placed.get(key)
-      const slot = puzzle.slots.find((s) => s.r === r && s.c === c)
+      const committedCh = puzzle.committed.get(key)
+      const pendTile = pending[key]
       const prem = puzzle.premiums.get(key)
 
-      let inner = null
       let cls = 'bcell'
+      let inner = null
 
-      if (pre) {
+      if (committedCh) {
         inner = (
-          <span className={`btile ${pre.crossing ? 'context' : 'anchor'}`}>
-            {pre.ch}
-            <span className="bpts">{scrabbleValues[pre.ch]}</span>
+          <span className="btile context">
+            {committedCh}
+            <span className="bpts">{scrabbleValues[committedCh]}</span>
           </span>
         )
-      } else if (slot) {
-        const placedTile = placements[key]
-        const showAnswer = status === 'revealed'
-        if (placedTile) {
-          inner = (
-            <button className="btile placed" onClick={() => removeSlot(key)}>
-              {placedTile.ch}
-              <span className="bpts">{scrabbleValues[placedTile.ch]}</span>
-            </button>
-          )
-        } else if (showAnswer) {
-          inner = (
-            <span className="btile reveal">
-              {slot.ch}
-              <span className="bpts">{scrabbleValues[slot.ch]}</span>
-            </span>
-          )
-        } else {
-          const isNext = puzzle.slots[firstOpen] && puzzle.slots[firstOpen].r === r && puzzle.slots[firstOpen].c === c
-          cls += isNext ? ' slot next' : ' slot'
+      } else if (pendTile) {
+        inner = (
+          <button className="btile pending" onClick={() => tapCell(r, c)}>
+            {pendTile.ch}
+            <span className="bpts">{scrabbleValues[pendTile.ch]}</span>
+          </button>
+        )
+      } else if (status === 'revealed' && revealCells.has(key)) {
+        const ch = revealCells.get(key)
+        inner = (
+          <span className="btile reveal">
+            {ch}
+            <span className="bpts">{scrabbleValues[ch]}</span>
+          </span>
+        )
+      } else {
+        if (prem) {
+          cls += ` ${premClass(prem)}`
+          inner = <span className="prem-label">{prem.label}</span>
         }
-      } else if (prem) {
-        cls += ` ${premClass(prem)}`
-        inner = <span className="prem-label">{prem.label}</span>
+        if (status === 'playing' && selectedId != null) cls += ' placeable'
+        cells.push(
+          <button key={key} className={cls} onClick={() => tapCell(r, c)}>
+            {inner}
+          </button>,
+        )
+        continue
       }
 
       cells.push(
@@ -221,18 +246,12 @@ export default function BoardScreen({ challenges, onResult, onExit }) {
           transition={{ type: 'spring', stiffness: 240, damping: 24 }}
         >
           <div className="mode-subtitle">
-            <LayoutGrid size={14} /> Make the word
+            <LayoutGrid size={14} /> Play a word
           </div>
 
           <p className="board-prompt" style={{ marginTop: 14 }}>
-            {puzzle.cross
-              ? 'Build a learned word through the tiles already on the board.'
-              : 'Spell a learned word into the glowing squares.'}
+            Make any word from the list. It must run through a letter already on the board.
           </p>
-
-          <div className="word-points" style={{ marginTop: 6 }}>
-            <Coins size={16} /> worth {points} points
-          </div>
 
           <div className="board-wrap" key={shake} style={shake ? { animation: 'shakex 0.45s' } : undefined}>
             <div className="board-grid" style={{ gridTemplateColumns: `repeat(${puzzle.size}, 1fr)` }}>
@@ -240,8 +259,23 @@ export default function BoardScreen({ challenges, onResult, onExit }) {
             </div>
           </div>
 
+          {/* Live status of the word being formed */}
+          {status === 'playing' && (
+            <div className="board-status">
+              {preview && preview.ok ? (
+                <span className="word-now ok">
+                  <Check size={15} /> {preview.word} · +{preview.score}
+                </span>
+              ) : preview ? (
+                <span className="board-note">{preview.msg}</span>
+              ) : (
+                <span className="board-note">Tap a tile, then tap a square to place it.</span>
+              )}
+            </div>
+          )}
+
           <AnimatePresence>
-            {hintShown && (
+            {hintShown && status === 'playing' && (
               <motion.div
                 className="board-hint"
                 initial={{ opacity: 0, y: -6 }}
@@ -257,13 +291,13 @@ export default function BoardScreen({ challenges, onResult, onExit }) {
           {status === 'playing' ? (
             <>
               <div className="rack-wrap">
-                <div className="rack-label">Your rack — tap to place</div>
+                <div className="rack-label">Your rack — tap a tile, then a square</div>
                 <div className="rack">
                   {rackTiles.map((t) => (
                     <motion.button
                       key={t.id}
-                      className="rtile"
-                      onClick={() => placeTile(t)}
+                      className={`rtile ${selectedId === t.id ? 'sel' : ''}`}
+                      onClick={() => tapRackTile(t)}
                       disabled={usedIds.has(t.id)}
                       whileTap={{ scale: 0.9 }}
                     >
@@ -274,7 +308,20 @@ export default function BoardScreen({ challenges, onResult, onExit }) {
                 </div>
               </div>
 
-              <div className="navigation" style={{ marginTop: 18 }}>
+              <div className="navigation" style={{ marginTop: 16 }}>
+                <button
+                  className="success"
+                  onClick={playWord}
+                  disabled={!preview || !preview.ok}
+                >
+                  <Send size={16} /> Play
+                </button>
+                <button onClick={recallAll} disabled={Object.keys(pending).length === 0}>
+                  <Undo2 size={16} /> Recall
+                </button>
+              </div>
+
+              <div className="navigation" style={{ marginTop: 10 }}>
                 <button onClick={() => setHintShown(true)} disabled={hintShown}>
                   <Lightbulb size={16} /> Hint
                 </button>
@@ -296,11 +343,11 @@ export default function BoardScreen({ challenges, onResult, onExit }) {
               >
                 {status === 'solved' ? (
                   <>
-                    <Check size={18} /> Nice! {target.word} · +{points} pts
+                    <Check size={18} /> Nice! {solvedPlay.word} · +{solvedPlay.score} pts
                   </>
                 ) : (
                   <>
-                    <X size={18} /> Answer: {target.word}
+                    <X size={18} /> One answer: {target.word}
                   </>
                 )}
               </motion.div>
@@ -324,7 +371,7 @@ export default function BoardScreen({ challenges, onResult, onExit }) {
       </AnimatePresence>
 
       <div className="stats-grid">
-        <StatCard variant="success" icon={Check} label="Placed" value={stats.solved} />
+        <StatCard variant="success" icon={Check} label="Played" value={stats.solved} />
         <StatCard variant="warning" icon={Eye} label="Revealed" value={stats.revealed} />
         <StatCard variant="info" icon={Coins} label="Score" value={stats.score} />
         <StatCard variant="accent" icon={CircleDot} label="Board" value={index + 1} />
