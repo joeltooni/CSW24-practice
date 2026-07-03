@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft,
@@ -13,6 +13,7 @@ import {
 import { AnimatedWord } from './Shared.jsx'
 
 export default function StudyScreen({
+  allWords,
   studyWords,
   studyIndex,
   setStudyIndex,
@@ -22,12 +23,39 @@ export default function StudyScreen({
   onExit,
 }) {
   const word = studyWords[studyIndex]
+  const [activeHook, setActiveHook] = useState(null)
+
+  const handleHookClick = (type, letter) => {
+    if (activeHook?.letter === letter && activeHook?.type === type) {
+      setActiveHook(null)
+      return
+    }
+    const target = (type === 'front' ? letter + word.word : word.word + letter).toUpperCase()
+    const found = allWords?.find(w => w.word === target)
+    
+    // If we have it in the dictionary, use it. Otherwise create a fallback so it still updates visually.
+    if (found) {
+      setActiveHook({ type, letter, wordObj: found })
+    } else {
+      setActiveHook({
+        type, letter, wordObj: {
+          word: target,
+          points: word.points + 1, // rough estimate
+          definition: 'Definition not found in core dictionary.',
+          exampleSentence: '',
+          group: 'Hooked Word',
+          rarity: 'common'
+        }
+      })
+    }
+  }
 
   const goPrev = () => setStudyIndex(Math.max(0, studyIndex - 1))
   const goNext = () => setStudyIndex(Math.min(studyWords.length - 1, studyIndex + 1))
 
   // Arrow keys flip through cards.
   useEffect(() => {
+    setActiveHook(null)
     const handler = (e) => {
       if (e.key === 'ArrowLeft') goPrev()
       if (e.key === 'ArrowRight') goNext()
@@ -56,7 +84,20 @@ export default function StudyScreen({
     )
   }
 
-  const status = progress[word.word]
+  const displayWord = activeHook ? activeHook.wordObj : word
+  const status = progress[displayWord.word]
+
+  const hookBtnStyle = (isActive) => ({
+    background: isActive ? 'var(--accent)' : 'var(--surface)',
+    color: isActive ? 'white' : 'var(--text)',
+    border: `1px solid ${isActive ? 'var(--accent)' : 'var(--border)'}`,
+    borderRadius: '4px',
+    padding: '4px 8px',
+    margin: '0 2px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    transition: 'all 0.1s'
+  })
 
   return (
     <div className="container">
@@ -82,27 +123,56 @@ export default function StudyScreen({
           transition={{ type: 'spring', stiffness: 260, damping: 26 }}
           style={{ transformPerspective: 1000 }}
         >
-          <AnimatedWord text={word.word} />
+          <AnimatedWord text={displayWord.word} />
           <motion.div
             className="word-points"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <Coins size={17} /> {word.points} points
+            <Coins size={17} /> {displayWord.points} points
           </motion.div>
           <div>
-            <span className="word-group">{word.group}</span>
+            <span className="word-group">{displayWord.group}</span>
           </div>
-          {word.rarity === 'rare' && (
+          {displayWord.rarity === 'rare' && (
             <div>
               <span className="word-rarity">
                 <Star size={13} fill="currentColor" /> Rare High-Scorer
               </span>
             </div>
           )}
-          <div className="word-definition">{word.definition}</div>
-          <div className="word-example">"{word.exampleSentence}"</div>
+          <div className="word-definition">{displayWord.definition}</div>
+          <div className="word-example">"{displayWord.exampleSentence}"</div>
+
+          {(word.frontHooks || word.backHooks) && (
+            <div className="word-hooks" style={{ marginTop: '16px', padding: '12px', backgroundColor: 'var(--surface-hover)', borderRadius: '8px', textAlign: 'center', fontSize: '1.15rem', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+                {word.frontHooks ? word.frontHooks.toUpperCase().split('').map(char => (
+                  <button
+                    key={'f-'+char}
+                    style={hookBtnStyle(activeHook?.type === 'front' && activeHook?.letter === char)}
+                    onClick={() => handleHookClick('front', char)}
+                  >{char}</button>
+                )) : <span style={{ color: 'var(--muted)' }}>·</span>}
+
+                <strong style={{ margin: '0 16px', color: 'var(--text)', fontSize: '1.4rem' }}>{word.word}</strong>
+
+                {word.backHooks ? word.backHooks.toUpperCase().split('').map(char => (
+                  <button
+                    key={'b-'+char}
+                    style={hookBtnStyle(activeHook?.type === 'back' && activeHook?.letter === char)}
+                    onClick={() => handleHookClick('back', char)}
+                  >{char}</button>
+                )) : <span style={{ color: 'var(--muted)' }}>·</span>}
+              </div>
+              {activeHook && (
+                <div style={{ marginTop: '12px', fontSize: '0.9rem', color: 'var(--accent)' }}>
+                  Showing details for hooked word <strong>{activeHook.wordObj.word}</strong>. Click again to close.
+                </div>
+              )}
+            </div>
+          )}
 
           <div>
             {status === 'mastered' && (

@@ -39,6 +39,8 @@ export const normalizeWord = (raw, i = 0) => {
     group: raw.group ?? `${word.length}-Letter`,
     rarity: raw.rarity ?? 'rare',
     difficulty: raw.difficulty ?? 'hard',
+    frontHooks: raw.frontHooks ?? '',
+    backHooks: raw.backHooks ?? '',
   }
 }
 

@@ -9,6 +9,8 @@ import { generateBoardChallenges, buildWordSet } from './lib/board.js'
 // category (its words are tagged so a chip can filter to exactly that set); files
 // without one are matched by a derived rule (length / letters). Add more here.
 const EXTRA_WORD_FILES = [
+  { file: './2-letters.json' },
+  { file: './3-letters.json' },
   { file: './7-8_letters_updated.json' },
   { file: './jqxz.json' },
   { file: './q-not-qu.json' },
@@ -314,6 +316,7 @@ export default function App() {
 
         {screen === 'study' && (
           <StudyScreen
+            allWords={wordData.words}
             studyWords={getStudyWords()}
             studyIndex={studyIndex}
             setStudyIndex={setStudyIndex}
